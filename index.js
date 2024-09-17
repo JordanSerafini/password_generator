@@ -2,12 +2,12 @@ const fs = require('fs');
 const path = require('path');
 
 const data = {
-    nom: 'Kante',
-    prenom: 'Marie',
-    annee_naissance: '1995',
-    jour_naissance: '13',
-    mois_naissance: '07',
-    date_inversee: '950713', 
+    nom: '',
+    prenom: '',
+    annee_naissance: '',
+    jour_naissance: '',
+    mois_naissance: '',
+    date_inversee: '', 
     couleur_preferee: 'Bleu',
     animaux_compagnie: ['Chien', 'Chat'],
     enfants: ['Paul', 'Emma'],
