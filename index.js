@@ -2,19 +2,19 @@ const fs = require('fs');
 const path = require('path');
 
 const data = {
-    noms: ['', 'Dupont', 'Martin'],
-    prenoms: ['', 'Pierre', 'Sophie'],
-    annee_naissance: ['', '1985', '2000'],
-    jour_naissance: ['', '15', '07'],
-    mois_naissance: ['01', '05', '12'],
-    dates_inversees: ['', '19850515', '20001207'],
+    noms: [''],
+    prenoms: [''],
+    annee_naissance: [''],
+    jour_naissance: [''],
+    mois_naissance: [''],
+    dates_inversees: [''],
     couleur_preferee: ['Bleu', 'Vert', 'Rouge'],
-    animaux_compagnie: ['Chien', 'Chat', 'Lapin'],
-    enfants: ['Paul', 'Emma', 'Lucas'],
-    ville_naissance: ['Annecy', 'Paris', 'Lyon'],
-    surnoms: ['Mimi', 'Jojo', 'Loulou'],
-    code_postal: ['74000', '75000', '69000'],
-    emploi: ['Développeur', 'Designer', 'Ingénieur'],
+    animaux_compagnie: [],
+    enfants: [],
+    ville_naissance: ['Annecy', 'Lyon'],
+    surnoms: ['Jojo', 'Loulou'],
+    code_postal: ['74000', '74370', '69000'],
+    emploi: ['Développeur', 'Ingénieur'],
     loisirs: ['Football', 'Musique', 'Lecture'],
     plat_prefere: ['Pizza', 'Sushi', 'Burger']
 };
@@ -22,6 +22,7 @@ const data = {
 const separators = ['', '_', '-', '.', '@', '#', '!', '$', '%', '&', '*', '?', '+', '='];
 const specialChars = ['!', '@', '#', '$', '%', '^', '&', '*', '?', '+', '-'];
 
+// Génère des variations en minuscules, majuscules, etc.
 function generateVariations(word) {
     const variations = [];
     variations.push(word.toLowerCase());
@@ -31,6 +32,7 @@ function generateVariations(word) {
     return variations;
 }
 
+// Génère une version en leet speak
 function leetSpeak(word) {
     return word.replace(/a/g, '@')
                .replace(/e/g, '3')
@@ -39,6 +41,7 @@ function leetSpeak(word) {
                .replace(/s/g, '$');
 }
 
+// Génère des combinaisons entre éléments avec séparateurs
 function generateCombinations(elements) {
     let combinations = [];
 
@@ -54,6 +57,7 @@ function generateCombinations(elements) {
     return combinations;
 }
 
+// Génère des initiales à partir des prénoms et noms
 function generateInitials(noms, prenoms) {
     let initials = [];
     noms.forEach((nom) => {
@@ -67,9 +71,46 @@ function generateInitials(noms, prenoms) {
     return initials;
 }
 
+// Ajout de combinaisons simples Prénom + Nom + Code postal
+function generateSpecificCombinations() {
+    let specificList = [];
+    data.prenoms.forEach((prenom) => {
+        data.noms.forEach((nom) => {
+            data.code_postal.forEach((cp) => {
+                // Génération sans séparateurs
+                specificList.push(`${prenom}${nom}${cp}`);
+                // Génération avec des séparateurs
+                separators.forEach((sep) => {
+                    specificList.push(`${prenom}${sep}${nom}${sep}${cp}`);
+                });
+            });
+        });
+    });
+
+    return specificList;
+}
+
+// Écriture en fichier par lots
+function writeToFile(passwordList) {
+    const filePath = path.join(__dirname, 'passwords_exhaustif_tableau.txt');
+    const batchSize = 100000; // Limite de taille pour chaque écriture
+
+    for (let i = 0; i < passwordList.length; i += batchSize) {
+        const batch = passwordList.slice(i, i + batchSize);
+        fs.appendFileSync(filePath, batch.join('\n') + '\n', 'utf8');
+    }
+
+    console.log(`Dictionnaire ultra-exhaustif généré avec ${passwordList.length} mots de passe possibles !`);
+}
+
+// Fonction principale pour générer la liste de mots de passe
 function generatePasswordList() {
     let passwordList = [];
 
+    // Génération des combinaisons spécifiques sans séparateurs (comme Jordanserafini74370)
+    passwordList = passwordList.concat(generateSpecificCombinations());
+
+    // Ajout des autres méthodes de génération (variations, combinaisons, etc.)
     let variations = [];
 
     Object.keys(data).forEach((key) => {
@@ -118,9 +159,7 @@ function generatePasswordList() {
         });
     });
 
-    const filePath = path.join(__dirname, 'passwords_exhaustif_tableau.txt');
-    fs.writeFileSync(filePath, passwordList.join('\n'), 'utf8');
-    console.log(`Dictionnaire ultra-exhaustif généré avec ${passwordList.length} mots de passe possibles !`);
+    writeToFile(passwordList);
 }
 
 generatePasswordList();
