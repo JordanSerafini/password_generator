@@ -7,7 +7,6 @@ const data = {
     annee_naissance: [''],
     jour_naissance: [''],
     mois_naissance: [''],
-    dates_inversees: [''],
     couleur_preferee: ['Bleu', 'Vert', 'Rouge'],
     animaux_compagnie: [],
     enfants: [],
@@ -22,26 +21,36 @@ const data = {
 const separators = ['', '_', '-', '.', '@', '#', '!', '$', '%', '&', '*', '?', '+', '='];
 const specialChars = ['!', '@', '#', '$', '%', '^', '&', '*', '?', '+', '-'];
 
-// Génère des variations en minuscules, majuscules, etc.
 function generateVariations(word) {
     const variations = [];
     variations.push(word.toLowerCase());
     variations.push(word.toUpperCase());
     variations.push(word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
     variations.push(word.charAt(0).toLowerCase() + word.slice(1).toUpperCase());
+
+    variations.push(alternateCase(word));
+    variations.push(leetSpeak(word));
+
     return variations;
 }
 
-// Génère une version en leet speak
 function leetSpeak(word) {
     return word.replace(/a/g, '@')
                .replace(/e/g, '3')
                .replace(/i/g, '1')
                .replace(/o/g, '0')
-               .replace(/s/g, '$');
+               .replace(/s/g, '$')
+               .replace(/l/g, '1')
+               .replace(/t/g, '7');
 }
 
-// Génère des combinaisons entre éléments avec séparateurs
+// Fonction pour alterner majuscules/minuscules dans un mot
+function alternateCase(word) {
+    return word.split('').map((char, index) => {
+        return index % 2 === 0 ? char.toUpperCase() : char.toLowerCase();
+    }).join('');
+}
+
 function generateCombinations(elements) {
     let combinations = [];
 
@@ -57,7 +66,6 @@ function generateCombinations(elements) {
     return combinations;
 }
 
-// Génère des initiales à partir des prénoms et noms
 function generateInitials(noms, prenoms) {
     let initials = [];
     noms.forEach((nom) => {
@@ -71,15 +79,22 @@ function generateInitials(noms, prenoms) {
     return initials;
 }
 
-// Ajout de combinaisons simples Prénom + Nom + Code postal
 function generateSpecificCombinations() {
     let specificList = [];
     data.prenoms.forEach((prenom) => {
         data.noms.forEach((nom) => {
             data.code_postal.forEach((cp) => {
-                // Génération sans séparateurs
                 specificList.push(`${prenom}${nom}${cp}`);
-                // Génération avec des séparateurs
+                specialChars.forEach((char) => {
+                    specificList.push(`${prenom}${nom}${cp}${char}`);
+                });
+                data.jour_naissance.forEach((jour) => {
+                    data.mois_naissance.forEach((mois) => {
+                        data.annee_naissance.forEach((annee) => {
+                            specificList.push(`${prenom}${nom}${cp}${jour}${mois}${annee}`);
+                        });
+                    });
+                });
                 separators.forEach((sep) => {
                     specificList.push(`${prenom}${sep}${nom}${sep}${cp}`);
                 });
@@ -90,27 +105,28 @@ function generateSpecificCombinations() {
     return specificList;
 }
 
-// Écriture en fichier par lots
-function writeToFile(passwordList) {
-    const filePath = path.join(__dirname, 'passwords_exhaustif_tableau.txt');
-    const batchSize = 100000; // Limite de taille pour chaque écriture
-
-    for (let i = 0; i < passwordList.length; i += batchSize) {
-        const batch = passwordList.slice(i, i + batchSize);
-        fs.appendFileSync(filePath, batch.join('\n') + '\n', 'utf8');
-    }
-
-    console.log(`Dictionnaire ultra-exhaustif généré avec ${passwordList.length} mots de passe possibles !`);
+function writeBatchToFile(passwordList, batchNumber) {
+    const filePath = path.join(__dirname, `passwords_batch_${batchNumber}.txt`);
+    fs.writeFileSync(filePath, passwordList.join('\n') + '\n', 'utf8');
 }
 
-// Fonction principale pour générer la liste de mots de passe
 function generatePasswordList() {
     let passwordList = [];
+    let batchNumber = 1;
+    let batchSize = 1000000;
+    let currentBatch = [];
 
-    // Génération des combinaisons spécifiques sans séparateurs (comme Jordanserafini74370)
-    passwordList = passwordList.concat(generateSpecificCombinations());
+    const addPasswordsToBatch = (newPasswords) => {
+        currentBatch = currentBatch.concat(newPasswords);
+        if (currentBatch.length >= batchSize) {
+            writeBatchToFile(currentBatch, batchNumber);
+            batchNumber++;
+            currentBatch = [];
+        }
+    };
 
-    // Ajout des autres méthodes de génération (variations, combinaisons, etc.)
+    addPasswordsToBatch(generateSpecificCombinations());
+
     let variations = [];
 
     Object.keys(data).forEach((key) => {
@@ -125,7 +141,7 @@ function generatePasswordList() {
     const initials = generateInitials(data.noms, data.prenoms);
     variations = variations.concat(initials);
 
-    passwordList = passwordList.concat(generateCombinations(variations));
+    addPasswordsToBatch(generateCombinations(variations));
 
     let extraCombinations = [];
     passwordList.forEach((pwd) => {
@@ -136,7 +152,7 @@ function generatePasswordList() {
         });
     });
 
-    passwordList = passwordList.concat(extraCombinations);
+    addPasswordsToBatch(extraCombinations);
 
     data.jour_naissance.forEach((jour, index) => {
         const mois = data.mois_naissance[index];
@@ -153,13 +169,16 @@ function generatePasswordList() {
 
         dates.forEach((date) => {
             variations.forEach((variante) => {
-                passwordList.push(`${variante}${date}`);
-                passwordList.push(`${date}${variante}`);
+                addPasswordsToBatch([`${variante}${date}`, `${date}${variante}`]);
             });
         });
     });
 
-    writeToFile(passwordList);
+    if (currentBatch.length > 0) {
+        writeBatchToFile(currentBatch, batchNumber);
+    }
+
+    console.log(`Dictionnaire généré avec succès dans plusieurs fichiers !`);
 }
 
 generatePasswordList();
