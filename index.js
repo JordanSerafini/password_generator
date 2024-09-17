@@ -2,21 +2,21 @@ const fs = require('fs');
 const path = require('path');
 
 const data = {
-    nom: 'Serafini',
-    prenom: 'Jordan',
-    annee_naissance: '1990',
-    jour_naissance: '21',
+    nom: '',
+    prenom: '',
+    annee_naissance: '',
+    jour_naissance: '',
     mois_naissance: '01',
-    date_inversee: '129900121',
+    date_inversee: '',
     couleur_preferee: 'Bleu',
     animaux_compagnie: ['Chien', 'Chat'],
     enfants: ['Paul', 'Emma'],
     ville_naissance: 'Paris',
     surnom: 'Mimi',
-    code_postal: '75001',  // Ajout du code postal
-    emploi: 'Développeur',  // Ajout d'une information professionnelle
-    loisirs: ['Football', 'Musique'],  // Ajout des loisirs
-    plat_prefere: 'Pizza'  // Ajout du plat préféré
+    code_postal: '74000',
+    emploi: 'Développeur',
+    loisirs: ['Football', 'Musique'],
+    plat_prefere: 'Pizza'
 };
 
 const separators = ['', '_', '-', '.', '@', '#', '!', '$', '%', '&', '*', '?', '+', '='];
