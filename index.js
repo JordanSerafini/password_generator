@@ -7,7 +7,7 @@ const data = {
     annee_naissance: '',
     jour_naissance: '',
     mois_naissance: '',
-    date_inversee: '', 
+    date_inversee: '',
     couleur_preferee: 'Bleu',
     animaux_compagnie: ['Chien', 'Chat'],
     enfants: ['Paul', 'Emma'],
@@ -50,6 +50,15 @@ function generateCombinations(elements) {
     return combinations;
 }
 
+function generateInitials() {
+    const nomInitial = data.nom.charAt(0).toUpperCase();
+    const prenomInitial = data.prenom.charAt(0).toUpperCase();
+    return [
+        `${prenomInitial}${nomInitial}`,
+        `${prenomInitial.toLowerCase()}${nomInitial.toLowerCase()}`
+    ];
+}
+
 function generatePasswordList() {
     let passwordList = [];
 
@@ -66,6 +75,9 @@ function generatePasswordList() {
 
     let leetVariations = variations.map(leetSpeak);
     variations = variations.concat(leetVariations);
+
+    const initials = generateInitials();
+    variations = variations.concat(initials);
 
     passwordList = passwordList.concat(generateCombinations(variations));
 
