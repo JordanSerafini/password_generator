@@ -2,21 +2,21 @@ const fs = require('fs');
 const path = require('path');
 
 const data = {
-    nom: '',
-    prenom: '',
-    annee_naissance: '',
-    jour_naissance: '',
-    mois_naissance: '01',
-    date_inversee: '',
-    couleur_preferee: 'Bleu',
-    animaux_compagnie: ['Chien', 'Chat'],
-    enfants: ['Paul', 'Emma'],
-    ville_naissance: 'Paris',
-    surnom: 'Mimi',
-    code_postal: '74000',
-    emploi: 'Développeur',
-    loisirs: ['Football', 'Musique'],
-    plat_prefere: 'Pizza'
+    noms: ['', 'Dupont', 'Martin'],
+    prenoms: ['', 'Pierre', 'Sophie'],
+    annee_naissance: ['', '1985', '2000'],
+    jour_naissance: ['', '15', '07'],
+    mois_naissance: ['01', '05', '12'],
+    dates_inversees: ['', '19850515', '20001207'],
+    couleur_preferee: ['Bleu', 'Vert', 'Rouge'],
+    animaux_compagnie: ['Chien', 'Chat', 'Lapin'],
+    enfants: ['Paul', 'Emma', 'Lucas'],
+    ville_naissance: ['Annecy', 'Paris', 'Lyon'],
+    surnoms: ['Mimi', 'Jojo', 'Loulou'],
+    code_postal: ['74000', '75000', '69000'],
+    emploi: ['Développeur', 'Designer', 'Ingénieur'],
+    loisirs: ['Football', 'Musique', 'Lecture'],
+    plat_prefere: ['Pizza', 'Sushi', 'Burger']
 };
 
 const separators = ['', '_', '-', '.', '@', '#', '!', '$', '%', '&', '*', '?', '+', '='];
@@ -54,33 +54,34 @@ function generateCombinations(elements) {
     return combinations;
 }
 
-function generateInitials() {
-    const nomInitial = data.nom.charAt(0).toUpperCase();
-    const prenomInitial = data.prenom.charAt(0).toUpperCase();
-    return [
-        `${prenomInitial}${nomInitial}`,
-        `${prenomInitial.toLowerCase()}${nomInitial.toLowerCase()}`
-    ];
+function generateInitials(noms, prenoms) {
+    let initials = [];
+    noms.forEach((nom) => {
+        prenoms.forEach((prenom) => {
+            const nomInitial = nom.charAt(0).toUpperCase();
+            const prenomInitial = prenom.charAt(0).toUpperCase();
+            initials.push(`${prenomInitial}${nomInitial}`);
+            initials.push(`${prenomInitial.toLowerCase()}${nomInitial.toLowerCase()}`);
+        });
+    });
+    return initials;
 }
 
 function generatePasswordList() {
     let passwordList = [];
 
     let variations = [];
-    Object.values(data).forEach((info) => {
-        if (Array.isArray(info)) {
-            info.forEach((element) => {
-                variations = variations.concat(generateVariations(element));
-            });
-        } else {
+
+    Object.keys(data).forEach((key) => {
+        data[key].forEach((info) => {
             variations = variations.concat(generateVariations(info));
-        }
+        });
     });
 
     let leetVariations = variations.map(leetSpeak);
     variations = variations.concat(leetVariations);
 
-    const initials = generateInitials();
+    const initials = generateInitials(data.noms, data.prenoms);
     variations = variations.concat(initials);
 
     passwordList = passwordList.concat(generateCombinations(variations));
@@ -96,22 +97,28 @@ function generatePasswordList() {
 
     passwordList = passwordList.concat(extraCombinations);
 
-    const dates = [
-        `${data.jour_naissance}${data.mois_naissance}${data.annee_naissance}`, 
-        `${data.annee_naissance}${data.mois_naissance}${data.jour_naissance}`,
-        `${data.date_inversee}`, 
-        `${data.annee_naissance}`, 
-        `${data.jour_naissance}-${data.mois_naissance}-${data.annee_naissance}`,
-    ];
+    data.jour_naissance.forEach((jour, index) => {
+        const mois = data.mois_naissance[index];
+        const annee = data.annee_naissance[index];
+        const dateInverse = data.dates_inversees[index];
 
-    dates.forEach((date) => {
-        variations.forEach((variante) => {
-            passwordList.push(`${variante}${date}`);
-            passwordList.push(`${date}${variante}`);
+        const dates = [
+            `${jour}${mois}${annee}`, 
+            `${annee}${mois}${jour}`,
+            `${dateInverse}`, 
+            `${annee}`, 
+            `${jour}-${mois}-${annee}`,
+        ];
+
+        dates.forEach((date) => {
+            variations.forEach((variante) => {
+                passwordList.push(`${variante}${date}`);
+                passwordList.push(`${date}${variante}`);
+            });
         });
     });
 
-    const filePath = path.join(__dirname, 'passwords_exhaustif.txt');
+    const filePath = path.join(__dirname, 'passwords_exhaustif_tableau.txt');
     fs.writeFileSync(filePath, passwordList.join('\n'), 'utf8');
     console.log(`Dictionnaire ultra-exhaustif généré avec ${passwordList.length} mots de passe possibles !`);
 }
