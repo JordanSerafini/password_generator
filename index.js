@@ -44,7 +44,6 @@ function leetSpeak(word) {
                .replace(/t/g, '7');
 }
 
-// Fonction pour alterner majuscules/minuscules dans un mot
 function alternateCase(word) {
     return word.split('').map((char, index) => {
         return index % 2 === 0 ? char.toUpperCase() : char.toLowerCase();
