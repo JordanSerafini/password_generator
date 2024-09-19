@@ -11,9 +11,9 @@ const data = {
     animaux_compagnie: [],
     enfants: [],
     ville_naissance: ['Annecy', 'Lyon'],
-    surnoms: ['Jojo', 'Loulou'],
+    surnoms: ['', ''],
     code_postal: ['74000', '74370', '69000'],
-    emploi: ['Développeur', 'Ingénieur'],
+    emploi: ['', ''],
     loisirs: ['Football', 'Musique', 'Lecture'],
     plat_prefere: ['Pizza', 'Sushi', 'Burger']
 };
