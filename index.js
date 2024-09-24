@@ -21,7 +21,7 @@ const data = {
 
 // Caractères séparateurs et spéciaux
 const separators = ['_', '-', '.', '@', '#', '!', '$', '%', '&', '*', '?', '+', '='];
-const specialChars = ['!', '@', '#', '$', '%', '^', '&', '*', '?', '+', '-', '_', '.'];
+const specialChars = ['!', '!!', '!!!', '!?', '@', '#', '$', '%', '^', '&', '*', '?', '+', '-', '_', '.'];
 
 // Fonction pour capitaliser la première lettre
 function capitalizeFirstLetter(word) {
@@ -147,7 +147,6 @@ function generateInitials(noms, prenoms) {
             initials.add(`${prenomInitial}${nomInitial}`);
             initials.add(`${prenomInitial.toLowerCase()}${nomInitial.toLowerCase()}`);
             initials.add(`${prenomInitial.toUpperCase()}${nomInitial.toUpperCase()}`);
-            // Ajout des nouvelles combinaisons pour couvrir toutes les variations
             initials.add(`${prenomInitial.toLowerCase()}${nomInitial.toUpperCase()}`);
             initials.add(`${prenomInitial.toUpperCase()}${nomInitial.toLowerCase()}`);
         }
@@ -183,13 +182,11 @@ async function generateSpecificCombinations(writeStream) {
             for (let value of allData[field]) {
                 if (value && value.length > 0) {
                     const combination = initial + value;
-                    //console.log(`Génération de la combinaison: ${combination}`);
                     await writeVariationsToStream(combination, writeStream);
 
                     // Ajouter des combinaisons avec séparateurs
                     for (let sep of separators) {
                         const sepCombination = initial + sep + value;
-                        //console.log(`Génération de la combinaison avec séparateur: ${sepCombination}`);
                         await writeVariationsToStream(sepCombination, writeStream);
                     }
                 }
@@ -202,7 +199,7 @@ async function generateSpecificCombinations(writeStream) {
                 for (let jour of allData.jour_naissance) {
                     if (annee && mois && jour) {
                         const dateCombinations = [
-                            `${initial}${annee}${jour}${mois}`, // Ajout de annee + jour + mois
+                            `${initial}${annee}${jour}${mois}`,
                             `${initial}${annee}${mois}${jour}`,
                             `${initial}${jour}${mois}${annee}`,
                             `${initial}${annee}`,
@@ -217,14 +214,12 @@ async function generateSpecificCombinations(writeStream) {
                         ];
 
                         for (let dateComb of dateCombinations) {
-                            //console.log(`Génération de la combinaison de date: ${dateComb}`);
                             await writeVariationsToStream(dateComb, writeStream);
 
                             // Ajouter des combinaisons avec séparateurs
                             const dateArr = dateComb.slice(initial.length).match(/.{1,2}/g) || [dateComb.slice(initial.length)];
                             for (let sep of separators) {
                                 const sepDateComb = `${initial}${sep}${dateArr.join(sep)}`;
-                                //console.log(`Génération de la combinaison de date avec séparateur: ${sepDateComb}`);
                                 await writeVariationsToStream(sepDateComb, writeStream);
                             }
                         }
@@ -319,14 +314,12 @@ function* generatePermutations(arr) {
 // Fonction pour traiter une combinaison et écrire les variations
 async function processCombination(combination, writeStream) {
     const combined = combination.join('');
-    //console.log(`Traitement de la combinaison: ${combined}`);
     await writeVariationsToStream(combined, writeStream);
 
     // Ajouter des combinaisons avec séparateurs
     for (let sep of separators) {
         const sepCombined = combination.join(sep);
         if (sepCombined.length > 0) {
-            //console.log(`Ajout de combinaison avec séparateur: ${sepCombined}`);
             await writeVariationsToStream(sepCombined, writeStream);
         }
     }
@@ -336,11 +329,9 @@ async function processCombination(combination, writeStream) {
         const preCombined = `${char}${combined}`;
         const postCombined = `${combined}${char}`;
         if (preCombined.length > 0) {
-            //console.log(`Ajout de préfixe spécial: ${preCombined}`);
             await writeVariationsToStream(preCombined, writeStream);
         }
         if (postCombined.length > 0) {
-            //console.log(`Ajout de suffixe spécial: ${postCombined}`);
             await writeVariationsToStream(postCombined, writeStream);
         }
     }
@@ -362,6 +353,10 @@ async function writeVariationsToStream(text, writeStream) {
             console.log(`Progression: ${counter} mots de passe générés.`);
         }
 
+        // Log spécifique pour vérifier l'existence de Mk950713!
+        if (variation === 'Mk950713!') {
+            console.log('🔍 Variation recherchée trouvée: Mk950713!');
+        }
     }
 }
 
