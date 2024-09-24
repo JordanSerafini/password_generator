@@ -3,11 +3,11 @@ const path = require('path');
 
 // Données de base
 const data = {
-    noms: ['kante'],
-    prenoms: ['marie'],
-    annee_naissance: ['95'],
-    jour_naissance: ['07'],
-    mois_naissance: ['13'],
+    noms: [''],
+    prenoms: [''],
+    annee_naissance: [''],
+    jour_naissance: [''],
+    mois_naissance: [''],
     couleur_preferee: [],
     animaux_compagnie: [],
     enfants: [],
@@ -16,12 +16,15 @@ const data = {
     code_postal: [],
     emploi: [],
     loisirs: [],
-    plat_prefere: []
+    plat_prefere: [],
+    mots_clé: []
 };
 
+
 // Caractères séparateurs et spéciaux
-const separators = ['_', '-', '.', '@', '#', '!', '$', '%', '&', '*', '?', '+', '='];
-const specialChars = ['!', '!!', '!!!', '!?', '@', '#', '$', '%', '^', '&', '*', '?', '+', '-', '_', '.'];
+const separators = ['_', '-', '.', '@', '#', '!', '$', '%', '&', '*', '?', '+', '=', '€', '£', '¥', '₹'];
+const specialChars = ['!', '!!', '!!!', '!?', '@', '#', '$', '%', '^', '&', '*', '?', '+', '-', '_', '.', '€', '£'];
+
 
 // Fonction pour capitaliser la première lettre
 function capitalizeFirstLetter(word) {
@@ -136,6 +139,14 @@ function* generateVariations(word) {
     }
 }
 
+// Fonction pour ajouter des caractères spéciaux à la fin des variations
+function* addSpecialChars(variation) {
+    yield variation; // Sans caractère spécial
+    for (let char of specialChars) {
+        yield variation + char; // Avec un caractère spécial ajouté à la fin
+    }
+}
+
 // Fonction pour générer des initiales pour les noms et prénoms
 function generateInitials(noms, prenoms) {
     const initials = new Set();
@@ -173,7 +184,8 @@ async function generateSpecificCombinations(writeStream) {
         'code_postal',
         'emploi',
         'loisirs',
-        'plat_prefere'
+        'plat_prefere',
+        'mots_clé'
     ];
 
     // Générer les combinaisons spécifiques
@@ -199,7 +211,7 @@ async function generateSpecificCombinations(writeStream) {
                 for (let jour of allData.jour_naissance) {
                     if (annee && mois && jour) {
                         const dateCombinations = [
-                            `${initial}${annee}${jour}${mois}`,
+                            `${initial}${annee}${jour}${mois}`, // Ajout de annee + jour + mois
                             `${initial}${annee}${mois}${jour}`,
                             `${initial}${jour}${mois}${annee}`,
                             `${initial}${annee}`,
@@ -343,19 +355,18 @@ async function processCombination(combination, writeStream) {
 // Fonction pour écrire les variations dans le flux en gérant la backpressure
 async function writeVariationsToStream(text, writeStream) {
     for (let variation of generateVariations(text)) {
-        if (!writeStream.write(variation + '\n')) {
-            await new Promise(resolve => writeStream.once('drain', resolve));
-        }
-        counter++;
+        for (let withSpecialChar of addSpecialChars(variation)) {
+            if (!writeStream.write(withSpecialChar + '\n')) {
+                await new Promise(resolve => writeStream.once('drain', resolve));
+            }
+            counter++;
 
-        // Afficher le compteur tous les 100 000 mots de passe générés
-        if (counter % 100000 === 0) {
-            console.log(`Progression: ${counter} mots de passe générés.`);
-        }
+            // Afficher le compteur tous les 100 000 mots de passe générés
+            if (counter % 100000 === 0) {
+                console.log(`Progression: ${counter} mots de passe générés.`);
+            }
 
-        // Log spécifique pour vérifier l'existence de Mk950713!
-        if (variation === 'Mk950713!') {
-            console.log('🔍 Variation recherchée trouvée: Mk950713!');
+            
         }
     }
 }
