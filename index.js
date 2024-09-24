@@ -3,11 +3,11 @@ const path = require('path');
 
 // Données de base
 const data = {
-    noms: [],
-    prenoms: [],
-    annee_naissance: [],
-    jour_naissance: [],
-    mois_naissance: [],
+    noms: ['kante'],
+    prenoms: ['marie'],
+    annee_naissance: ['95'],
+    jour_naissance: ['07'],
+    mois_naissance: ['13'],
     couleur_preferee: [],
     animaux_compagnie: [],
     enfants: [],
@@ -136,6 +136,142 @@ function* generateVariations(word) {
     }
 }
 
+// Fonction pour générer des initiales pour les noms et prénoms
+function generateInitials(noms, prenoms) {
+    const initials = new Set();
+    for (let nom of noms) {
+        for (let prenom of prenoms) {
+            if (nom.length === 0 || prenom.length === 0) continue;
+            const nomInitial = nom.charAt(0);
+            const prenomInitial = prenom.charAt(0);
+            initials.add(`${prenomInitial}${nomInitial}`);
+            initials.add(`${prenomInitial.toLowerCase()}${nomInitial.toLowerCase()}`);
+            initials.add(`${prenomInitial.toUpperCase()}${nomInitial.toUpperCase()}`);
+        }
+    }
+    return Array.from(initials);
+}
+
+let counter = 0;
+
+// Nouvelle fonction pour générer des combinaisons spécifiques
+async function generateSpecificCombinations(writeStream) {
+    const initials = generateInitials(allData.noms, allData.prenoms);
+
+    // Liste des données pour les combinaisons spécifiques
+    const dataFields = [
+        'jour_naissance',
+        'mois_naissance',
+        'annee_naissance',
+        'couleur_preferee',
+        'animaux_compagnie',
+        'enfants',
+        'ville',
+        'surnoms',
+        'code_postal',
+        'emploi',
+        'loisirs',
+        'plat_prefere'
+    ];
+
+    // Générer les combinaisons spécifiques
+    for (let initial of initials) {
+        for (let field of dataFields) {
+            for (let value of allData[field]) {
+                if (value && value.length > 0) {
+                    const combination = initial + value;
+                    //console.log(`Génération de la combinaison: ${combination}`);
+                    await writeVariationsToStream(combination, writeStream);
+
+                    // Ajouter des combinaisons avec séparateurs
+                    for (let sep of separators) {
+                        const sepCombination = initial + sep + value;
+                        //console.log(`Génération de la combinaison avec séparateur: ${sepCombination}`);
+                        await writeVariationsToStream(sepCombination, writeStream);
+                    }
+                }
+            }
+        }
+
+        // Combiner avec les dates de naissance
+        for (let annee of allData.annee_naissance) {
+            for (let mois of allData.mois_naissance) {
+                for (let jour of allData.jour_naissance) {
+                    if (annee && mois && jour) {
+                        const dateCombinations = [
+                            initial + annee + mois + jour,
+                            initial + jour + mois + annee,
+                            initial + annee,
+                            initial + mois,
+                            initial + jour,
+                            initial + jour + mois,
+                            initial + mois + annee,
+                            initial + annee + jour,
+                            initial + annee + mois,
+                            initial + jour + annee,
+                            initial + mois + jour,
+                            // Nouvelle combinaison ajoutée
+                            initial + annee + jour + mois
+                        ];
+
+                        for (let dateComb of dateCombinations) {
+                            //(`Génération de la combinaison de date: ${dateComb}`);
+                            await writeVariationsToStream(dateComb, writeStream);
+
+                            // Ajouter des combinaisons avec séparateurs
+                            const dateArr = dateComb.slice(initial.length).match(/.{1,2}/g) || [dateComb.slice(initial.length)];
+                            for (let sep of separators) {
+                                const sepDateComb = initial + sep + dateArr.join(sep);
+                                //console.log(`Génération de la combinaison de date avec séparateur: ${sepDateComb}`);
+                                await writeVariationsToStream(sepDateComb, writeStream);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+// Fonction principale pour générer la liste de mots de passe
+async function generatePasswordList() {
+    const filePath = path.join(__dirname, 'passwords.txt');
+    const writeStream = fs.createWriteStream(filePath, { flags: 'w', encoding: 'utf8' });
+
+    writeStream.on('error', (err) => {
+        console.error('Erreur lors de l\'écriture du fichier:', err);
+    });
+
+    // Génération des initiales seules
+    const initials = generateInitials(allData.noms, allData.prenoms);
+    for (let initial of initials) {
+        await writeVariationsToStream(initial, writeStream);
+    }
+
+    // Générer les combinaisons spécifiques
+    await generateSpecificCombinations(writeStream);
+
+    // Collecte de tous les mots de données
+    const dataWords = Object.values(allData).flat().filter(word => word && word.length > 0);
+
+    // Générer toutes les combinaisons possibles de données
+    const combinationGen = generateAllCombinations(dataWords);
+
+    // Utilisation de l'asynchronicité pour éviter le blocage
+    for (let combination of combinationGen) {
+        // Pour chaque combinaison, générer toutes les permutations
+        for (let permutation of generatePermutations(combination)) {
+            await processCombination(permutation, writeStream);
+        }
+    }
+
+    writeStream.end();
+    writeStream.on('finish', () => {
+        console.log(`Dictionnaire généré avec succès ! Total: ${counter} mots de passe générés.`);
+    });
+}
+
 // Fonction pour générer toutes les combinaisons possibles de données
 function* generateAllCombinations(dataWords) {
     const n = dataWords.length;
@@ -179,75 +315,17 @@ function* generatePermutations(arr) {
     }
 }
 
-// Fonction pour générer des initiales pour les noms et prénoms
-function generateInitials(noms, prenoms) {
-    const initials = new Set();
-    for (let nom of noms) {
-        for (let prenom of prenoms) {
-            if (nom.length === 0 || prenom.length === 0) continue;
-            const nomInitial = nom.charAt(0);
-            const prenomInitial = prenom.charAt(0);
-            initials.add(`${prenomInitial}${nomInitial}`);
-            initials.add(`${prenomInitial.toLowerCase()}${nomInitial.toLowerCase()}`);
-            initials.add(`${prenomInitial.toUpperCase()}${nomInitial.toUpperCase()}`);
-        }
-    }
-    return Array.from(initials);
-}
-
-let counter = 0;
-
-// Fonction principale pour générer la liste de mots de passe
-async function generatePasswordList() {
-    const filePath = path.join(__dirname, 'passwords.txt');
-    const writeStream = fs.createWriteStream(filePath, { flags: 'w', encoding: 'utf8' });
-
-    writeStream.on('error', (err) => {
-        console.error('Erreur lors de l\'écriture du fichier:', err);
-    });
-
-    // Collecte de tous les mots de données
-    const dataWords = Object.values(allData).flat().filter(word => word && word.length > 0);
-
-    // Génération des initiales
-    const initials = generateInitials(allData.noms, allData.prenoms);
-    for (let initial of initials) {
-        if (!writeStream.write(initial + '\n')) {
-            await new Promise(resolve => writeStream.once('drain', resolve));
-        }
-        counter++;
-
-        if (counter % 100000 === 0) {
-            console.log(`Progression: ${counter} mots de passe générés.`);
-        }
-    }
-
-    // Générer toutes les combinaisons possibles de données
-    const combinationGen = generateAllCombinations(dataWords);
-
-    // Utilisation de l'asynchronicité pour éviter le blocage
-    for (let combination of combinationGen) {
-        // Pour chaque combinaison, générer toutes les permutations
-        for (let permutation of generatePermutations(combination)) {
-            await processCombination(permutation, writeStream);
-        }
-    }
-
-    writeStream.end();
-    writeStream.on('finish', () => {
-        console.log(`Dictionnaire généré avec succès ! Total: ${counter} mots de passe générés.`);
-    });
-}
-
 // Fonction pour traiter une combinaison et écrire les variations
 async function processCombination(combination, writeStream) {
     const combined = combination.join('');
+    //console.log(`Traitement de la combinaison: ${combined}`);
     await writeVariationsToStream(combined, writeStream);
 
     // Ajouter des combinaisons avec séparateurs
     for (let sep of separators) {
         const sepCombined = combination.join(sep);
         if (sepCombined.length > 0) {
+            //console.log(`Ajout de combinaison avec séparateur: ${sepCombined}`);
             await writeVariationsToStream(sepCombined, writeStream);
         }
     }
@@ -257,9 +335,11 @@ async function processCombination(combination, writeStream) {
         const preCombined = `${char}${combined}`;
         const postCombined = `${combined}${char}`;
         if (preCombined.length > 0) {
+            //(`Ajout de préfixe spécial: ${preCombined}`);
             await writeVariationsToStream(preCombined, writeStream);
         }
         if (postCombined.length > 0) {
+            //console.log(`Ajout de suffixe spécial: ${postCombined}`);
             await writeVariationsToStream(postCombined, writeStream);
         }
     }
@@ -267,6 +347,7 @@ async function processCombination(combination, writeStream) {
     // Attendre que l'event loop ait une chance de traiter d'autres tâches
     await new Promise(resolve => setImmediate(resolve));
 }
+
 
 // Fonction pour écrire les variations dans le flux en gérant la backpressure
 async function writeVariationsToStream(text, writeStream) {
@@ -276,12 +357,13 @@ async function writeVariationsToStream(text, writeStream) {
         }
         counter++;
 
-        // Afficher le compteur tous les 100,000 mots de passe générés
+        // Afficher le compteur tous les 100 000 mots de passe générés
         if (counter % 100000 === 0) {
             console.log(`Progression: ${counter} mots de passe générés.`);
         }
     }
 }
+
 
 // Exécuter la génération des mots de passe
 generatePasswordList().catch(err => {
