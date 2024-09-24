@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 const data = {
-    noms: ['serafini'],
-    prenoms: ['jordan'],
+    noms: [],
+    prenoms: [],
     annee_naissance: [''],
     jour_naissance: [''],
     mois_naissance: [''],
@@ -12,7 +12,7 @@ const data = {
     enfants: [],
     ville: [],
     surnoms: [],
-    code_postal: ['74370'],
+    code_postal: [],
     emploi: [],
     loisirs: [],
     plat_prefere: [],
