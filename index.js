@@ -1,28 +1,27 @@
 const fs = require('fs');
 const path = require('path');
 
-
+// Données de base
 const data = {
-    noms: [''],
-    prenoms: [''],
-    annee_naissance: [''],
-    jour_naissance: [''],
-    mois_naissance: [''],
+    noms: [],
+    prenoms: [],
+    annee_naissance: [],
+    jour_naissance: [],
+    mois_naissance: [],
     couleur_preferee: [],
     animaux_compagnie: [],
     enfants: [],
-    ville_naissance: ['Annecy'],
+    ville: [],
     surnoms: [],
-    code_postal: ['74000', '74370'],
-    emploi: ['developpeur'],
-    loisirs: ['Football'],
-    plat_prefere: ['Pizza']
+    code_postal: [],
+    emploi: [],
+    loisirs: [],
+    plat_prefere: []
 };
 
 // Caractères séparateurs et spéciaux
 const separators = ['_', '-', '.', '@', '#', '!', '$', '%', '&', '*', '?', '+', '='];
 const specialChars = ['!', '@', '#', '$', '%', '^', '&', '*', '?', '+', '-', '_', '.'];
-
 
 // Fonction pour capitaliser la première lettre
 function capitalizeFirstLetter(word) {
@@ -34,7 +33,7 @@ function capitalizeFirstLetter(word) {
 function capitalizeEachWord(words) {
     return words
         .split(/(\s|-|_|\.)/)
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .map(word => capitalizeFirstLetter(word))
         .join('');
 }
 
@@ -98,6 +97,24 @@ function phoneticVariations(word) {
         result = result.replace(regex, value);
     }
     return result;
+}
+
+// Nouvelle fonction pour capitaliser toutes les données de l'objet `data`
+function capitalizeData(data) {
+    const capitalizedData = {};
+    for (const [key, values] of Object.entries(data)) {
+        capitalizedData[key] = values.map(value => capitalizeEachWord(value));
+    }
+    return capitalizedData;
+}
+
+// Capitaliser toutes les données de l'objet `data`
+const capitalizedData = capitalizeData(data);
+
+// Fusionner les données originales et capitalisées
+const allData = {};
+for (const key of Object.keys(data)) {
+    allData[key] = Array.from(new Set([...data[key], ...capitalizedData[key]]));
 }
 
 // Fonction pour générer toutes les variations d'un mot
@@ -178,7 +195,6 @@ function generateInitials(noms, prenoms) {
     return Array.from(initials);
 }
 
-// Ajouter un compteur global
 let counter = 0;
 
 // Fonction principale pour générer la liste de mots de passe
@@ -191,10 +207,10 @@ async function generatePasswordList() {
     });
 
     // Collecte de tous les mots de données
-    const dataWords = Object.values(data).flat().filter(word => word && word.length > 0);
+    const dataWords = Object.values(allData).flat().filter(word => word && word.length > 0);
 
     // Génération des initiales
-    const initials = generateInitials(data.noms, data.prenoms);
+    const initials = generateInitials(allData.noms, allData.prenoms);
     for (let initial of initials) {
         if (!writeStream.write(initial + '\n')) {
             await new Promise(resolve => writeStream.once('drain', resolve));
