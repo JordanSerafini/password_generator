@@ -1,10 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-// Données de base
 const data = {
-    noms: [''],
-    prenoms: [''],
+    noms: ['serafini'],
+    prenoms: ['jordan'],
     annee_naissance: [''],
     jour_naissance: [''],
     mois_naissance: [''],
@@ -13,18 +12,16 @@ const data = {
     enfants: [],
     ville: [],
     surnoms: [],
-    code_postal: [],
+    code_postal: ['74370'],
     emploi: [],
     loisirs: [],
     plat_prefere: [],
     mots_clé: []
 };
 
-
 // Caractères séparateurs et spéciaux
 const separators = ['_', '-', '.', '@', '#', '!', '$', '%', '&', '*', '?', '+', '=', '€', '£', '¥', '₹'];
 const specialChars = ['!', '!!', '!!!', '!?', '@', '#', '$', '%', '^', '&', '*', '?', '+', '-', '_', '.', '€', '£'];
-
 
 // Fonction pour capitaliser la première lettre
 function capitalizeFirstLetter(word) {
@@ -45,36 +42,105 @@ function reverseString(word) {
     return word.split('').reverse().join('');
 }
 
-// Fonction pour transformer un mot en Leet Speak
-function leetSpeak(word) {
-    const leetMap = {
-        'a': '4',
-        'e': '3',
-        'i': '1',
-        'o': '0',
-        's': '5',
-        'l': '1',
-        't': '7',
-        'b': '8',
-        'g': '6',
-        'z': '2',
-        'd': 'd',
-        'n': 'n',
-        'r': 'r'
+// Fonction pour générer toutes les substitutions possibles
+function* generateSubstitutions(word) {
+    const substitutionMap = {
+        'a': ['a', '4', '@'],
+        'b': ['b', '8'],
+        'c': ['c', 'k'],
+        'd': ['d'],
+        'e': ['e', '3'],
+        'f': ['f'],
+        'g': ['g', '6'],
+        'h': ['h'],
+        'i': ['i', '1', '!'],
+        'j': ['j'],
+        'k': ['k'],
+        'l': ['l', '1', '!', '£'],
+        'm': ['m'],
+        'n': ['n'],
+        'o': ['o', '0'],
+        'p': ['p'],
+        'q': ['q'],
+        'r': ['r'],
+        's': ['s', '5', '$'],
+        't': ['t', '7'],
+        'u': ['u'],
+        'v': ['v'],
+        'w': ['w'],
+        'x': ['x', 'ks'],
+        'y': ['y', 'i'],
+        'z': ['z', '2'],
+        'ph': ['f'],
+        'ck': ['k'],
+        'ee': ['i'],
+        'oo': ['u']
     };
-    return word.replace(/[aeisltbgzdnr]/gi, char => leetMap[char.toLowerCase()] || char);
+
+    // Liste des clés de substitution triées par longueur décroissante pour gérer les substitutions multi-caractères
+    const keys = Object.keys(substitutionMap).sort((a, b) => b.length - a.length);
+
+    function* recurse(index, current) {
+        if (index >= word.length) {
+            yield current;
+            return;
+        }
+
+        let substituted = false;
+        for (const key of keys) {
+            if (key.length > 1 && word.slice(index, index + key.length).toLowerCase() === key.toLowerCase()) {
+                substituted = true;
+                for (const substitution of substitutionMap[key]) {
+                    yield* recurse(index + key.length, current + substitution);
+                }
+            }
+        }
+
+        if (!substituted) {
+            const char = word[index].toLowerCase();
+            if (substitutionMap[char]) {
+                for (const substitution of substitutionMap[char]) {
+                    yield* recurse(index + 1, current + substitution);
+                }
+            } else {
+                yield* recurse(index + 1, current + word[index]);
+            }
+        }
+    }
+
+    yield* recurse(0, '');
 }
 
-// Fonction pour remplacer des caractères courants
-function replaceCommonChars(word) {
-    const replaceMap = {
-        'a': '@',
-        'i': '!',
-        's': '$',
-        'o': '0',
-        'e': '3'
-    };
-    return word.replace(/[aisoe]/gi, char => replaceMap[char.toLowerCase()] || char);
+// Fonction pour générer toutes les variations d'un mot
+function* generateVariations(word) {
+    const variations = new Set();
+
+    // Variations basiques
+    variations.add(word);
+    variations.add(word.toLowerCase());
+    variations.add(word.toUpperCase());
+    variations.add(capitalizeFirstLetter(word));
+    variations.add(capitalizeEachWord(word));
+    variations.add(alternateCase(word));
+    variations.add(reverseString(word));
+    variations.add(phoneticVariations(word));
+
+    // Substitutions
+    for (const substitution of generateSubstitutions(word)) {
+        variations.add(substitution);
+    }
+
+    for (let variation of variations) {
+        yield variation;
+    }
+}
+
+// Fonction pour ajouter des caractères spéciaux à la fin des variations
+function* addSpecialChars(variation) {
+    yield variation; // Sans caractère spécial
+    for (let char of specialChars) {
+        yield variation + char; // Avec un caractère spécial ajouté à la fin
+    }
 }
 
 // Fonction pour alterner majuscules et minuscules
@@ -102,7 +168,7 @@ function phoneticVariations(word) {
     return result;
 }
 
-// Nouvelle fonction pour capitaliser toutes les données de l'objet `data`
+// Fonction pour capitaliser toutes les données de l'objet `data`
 function capitalizeData(data) {
     const capitalizedData = {};
     for (const [key, values] of Object.entries(data)) {
@@ -118,33 +184,6 @@ const capitalizedData = capitalizeData(data);
 const allData = {};
 for (const key of Object.keys(data)) {
     allData[key] = Array.from(new Set([...data[key], ...capitalizedData[key]]));
-}
-
-// Fonction pour générer toutes les variations d'un mot
-function* generateVariations(word) {
-    const variations = new Set();
-    variations.add(word);
-    variations.add(word.toLowerCase());
-    variations.add(word.toUpperCase());
-    variations.add(capitalizeFirstLetter(word));
-    variations.add(capitalizeEachWord(word));
-    variations.add(alternateCase(word));
-    variations.add(leetSpeak(word));
-    variations.add(reverseString(word));
-    variations.add(replaceCommonChars(word));
-    variations.add(phoneticVariations(word));
-
-    for (let variation of variations) {
-        yield variation;
-    }
-}
-
-// Fonction pour ajouter des caractères spéciaux à la fin des variations
-function* addSpecialChars(variation) {
-    yield variation; // Sans caractère spécial
-    for (let char of specialChars) {
-        yield variation + char; // Avec un caractère spécial ajouté à la fin
-    }
 }
 
 // Fonction pour générer des initiales pour les noms et prénoms
@@ -211,7 +250,7 @@ async function generateSpecificCombinations(writeStream) {
                 for (let jour of allData.jour_naissance) {
                     if (annee && mois && jour) {
                         const dateCombinations = [
-                            `${initial}${annee}${jour}${mois}`, // Ajout de annee + jour + mois
+                            `${initial}${annee}${jour}${mois}`,
                             `${initial}${annee}${mois}${jour}`,
                             `${initial}${jour}${mois}${annee}`,
                             `${initial}${annee}`,
@@ -365,8 +404,6 @@ async function writeVariationsToStream(text, writeStream) {
             if (counter % 100000 === 0) {
                 console.log(`Progression: ${counter} mots de passe générés.`);
             }
-
-            
         }
     }
 }
