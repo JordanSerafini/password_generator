@@ -1,183 +1,273 @@
 const fs = require('fs');
 const path = require('path');
 
+
 const data = {
     noms: [''],
     prenoms: [''],
     annee_naissance: [''],
     jour_naissance: [''],
     mois_naissance: [''],
-    couleur_preferee: ['Bleu', 'Vert', 'Rouge'],
+    couleur_preferee: [],
     animaux_compagnie: [],
     enfants: [],
-    ville_naissance: ['Annecy', 'Lyon'],
-    surnoms: ['', ''],
-    code_postal: ['74000', '74370', '69000'],
-    emploi: ['', ''],
-    loisirs: ['Football', 'Musique', 'Lecture'],
-    plat_prefere: ['Pizza', 'Sushi', 'Burger']
+    ville_naissance: ['Annecy'],
+    surnoms: [],
+    code_postal: ['74000', '74370'],
+    emploi: ['developpeur'],
+    loisirs: ['Football'],
+    plat_prefere: ['Pizza']
 };
 
-const separators = ['', '_', '-', '.', '@', '#', '!', '$', '%', '&', '*', '?', '+', '='];
-const specialChars = ['!', '@', '#', '$', '%', '^', '&', '*', '?', '+', '-'];
+// Caractères séparateurs et spéciaux
+const separators = ['_', '-', '.', '@', '#', '!', '$', '%', '&', '*', '?', '+', '='];
+const specialChars = ['!', '@', '#', '$', '%', '^', '&', '*', '?', '+', '-', '_', '.'];
 
-function generateVariations(word) {
-    const variations = [];
-    variations.push(word.toLowerCase());
-    variations.push(word.toUpperCase());
-    variations.push(word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
-    variations.push(word.charAt(0).toLowerCase() + word.slice(1).toUpperCase());
 
-    variations.push(alternateCase(word));
-    variations.push(leetSpeak(word));
-
-    return variations;
+// Fonction pour capitaliser la première lettre
+function capitalizeFirstLetter(word) {
+    if (word.length === 0) return '';
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
 }
 
+// Fonction pour capitaliser chaque mot
+function capitalizeEachWord(words) {
+    return words
+        .split(/(\s|-|_|\.)/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join('');
+}
+
+// Fonction pour inverser une chaîne
+function reverseString(word) {
+    return word.split('').reverse().join('');
+}
+
+// Fonction pour transformer un mot en Leet Speak
 function leetSpeak(word) {
-    return word.replace(/a/g, '@')
-               .replace(/e/g, '3')
-               .replace(/i/g, '1')
-               .replace(/o/g, '0')
-               .replace(/s/g, '$')
-               .replace(/l/g, '1')
-               .replace(/t/g, '7');
+    const leetMap = {
+        'a': '4',
+        'e': '3',
+        'i': '1',
+        'o': '0',
+        's': '5',
+        'l': '1',
+        't': '7',
+        'b': '8',
+        'g': '6',
+        'z': '2',
+        'd': 'd',
+        'n': 'n',
+        'r': 'r'
+    };
+    return word.replace(/[aeisltbgzdnr]/gi, char => leetMap[char.toLowerCase()] || char);
 }
 
+// Fonction pour remplacer des caractères courants
+function replaceCommonChars(word) {
+    const replaceMap = {
+        'a': '@',
+        'i': '!',
+        's': '$',
+        'o': '0',
+        'e': '3'
+    };
+    return word.replace(/[aisoe]/gi, char => replaceMap[char.toLowerCase()] || char);
+}
+
+// Fonction pour alterner majuscules et minuscules
 function alternateCase(word) {
     return word.split('').map((char, index) => {
-        return index % 2 === 0 ? char.toUpperCase() : char.toLowerCase();
+        return index % 2 === 0 ? char.toLowerCase() : char.toUpperCase();
     }).join('');
 }
 
-function generateCombinations(elements) {
-    let combinations = [];
-
-    elements.forEach((e1) => {
-        elements.forEach((e2) => {
-            separators.forEach((sep) => {
-                combinations.push(`${e1}${sep}${e2}`);
-                combinations.push(`${e2}${sep}${e1}`);
-            });
-        });
-    });
-
-    return combinations;
-}
-
-function generateInitials(noms, prenoms) {
-    let initials = [];
-    noms.forEach((nom) => {
-        prenoms.forEach((prenom) => {
-            const nomInitial = nom.charAt(0).toUpperCase();
-            const prenomInitial = prenom.charAt(0).toUpperCase();
-            initials.push(`${prenomInitial}${nomInitial}`);
-            initials.push(`${prenomInitial.toLowerCase()}${nomInitial.toLowerCase()}`);
-        });
-    });
-    return initials;
-}
-
-function generateSpecificCombinations() {
-    let specificList = [];
-    data.prenoms.forEach((prenom) => {
-        data.noms.forEach((nom) => {
-            data.code_postal.forEach((cp) => {
-                specificList.push(`${prenom}${nom}${cp}`);
-                specialChars.forEach((char) => {
-                    specificList.push(`${prenom}${nom}${cp}${char}`);
-                });
-                data.jour_naissance.forEach((jour) => {
-                    data.mois_naissance.forEach((mois) => {
-                        data.annee_naissance.forEach((annee) => {
-                            specificList.push(`${prenom}${nom}${cp}${jour}${mois}${annee}`);
-                        });
-                    });
-                });
-                separators.forEach((sep) => {
-                    specificList.push(`${prenom}${sep}${nom}${sep}${cp}`);
-                });
-            });
-        });
-    });
-
-    return specificList;
-}
-
-function writeBatchToFile(passwordList, batchNumber) {
-    const filePath = path.join(__dirname, `passwords_batch_${batchNumber}.txt`);
-    fs.writeFileSync(filePath, passwordList.join('\n') + '\n', 'utf8');
-}
-
-function generatePasswordList() {
-    let passwordList = [];
-    let batchNumber = 1;
-    let batchSize = 1000000;
-    let currentBatch = [];
-
-    const addPasswordsToBatch = (newPasswords) => {
-        currentBatch = currentBatch.concat(newPasswords);
-        if (currentBatch.length >= batchSize) {
-            writeBatchToFile(currentBatch, batchNumber);
-            batchNumber++;
-            currentBatch = [];
-        }
+// Fonction pour générer des variations phonétiques
+function phoneticVariations(word) {
+    const phoneticMap = {
+        'ph': 'f',
+        'ck': 'k',
+        'x': 'ks',
+        'y': 'i',
+        'ee': 'i',
+        'oo': 'u'
     };
+    let result = word;
+    for (const [key, value] of Object.entries(phoneticMap)) {
+        const regex = new RegExp(key, 'gi');
+        result = result.replace(regex, value);
+    }
+    return result;
+}
 
-    addPasswordsToBatch(generateSpecificCombinations());
+// Fonction pour générer toutes les variations d'un mot
+function* generateVariations(word) {
+    const variations = new Set();
+    variations.add(word);
+    variations.add(word.toLowerCase());
+    variations.add(word.toUpperCase());
+    variations.add(capitalizeFirstLetter(word));
+    variations.add(capitalizeEachWord(word));
+    variations.add(alternateCase(word));
+    variations.add(leetSpeak(word));
+    variations.add(reverseString(word));
+    variations.add(replaceCommonChars(word));
+    variations.add(phoneticVariations(word));
 
-    let variations = [];
+    for (let variation of variations) {
+        yield variation;
+    }
+}
 
-    Object.keys(data).forEach((key) => {
-        data[key].forEach((info) => {
-            variations = variations.concat(generateVariations(info));
-        });
+// Fonction pour générer toutes les combinaisons possibles de données
+function* generateAllCombinations(dataWords) {
+    const n = dataWords.length;
+    // Générer toutes les combinaisons de longueur 1 à n
+    for (let r = 1; r <= n; r++) {
+        yield* combinations(dataWords, r);
+    }
+}
+
+// Fonction pour générer toutes les combinaisons de longueur r
+function* combinations(arr, r) {
+    const n = arr.length;
+    if (r > n || r <= 0) return;
+    const indices = Array.from({ length: r }, (_, i) => i);
+    while (true) {
+        const combination = indices.map(i => arr[i]);
+        yield combination;
+
+        // Trouver la position à incrémenter
+        let i = r - 1;
+        while (i >= 0 && indices[i] === i + n - r) i--;
+        if (i < 0) break;
+        indices[i]++;
+        for (let j = i + 1; j < r; j++) {
+            indices[j] = indices[j - 1] + 1;
+        }
+    }
+}
+
+// Fonction pour générer toutes les permutations d'une combinaison
+function* generatePermutations(arr) {
+    if (arr.length === 1) {
+        yield arr;
+        return;
+    }
+    for (let i = 0; i < arr.length; i++) {
+        const rest = arr.slice(0, i).concat(arr.slice(i + 1));
+        for (let perm of generatePermutations(rest)) {
+            yield [arr[i]].concat(perm);
+        }
+    }
+}
+
+// Fonction pour générer des initiales pour les noms et prénoms
+function generateInitials(noms, prenoms) {
+    const initials = new Set();
+    for (let nom of noms) {
+        for (let prenom of prenoms) {
+            if (nom.length === 0 || prenom.length === 0) continue;
+            const nomInitial = nom.charAt(0);
+            const prenomInitial = prenom.charAt(0);
+            initials.add(`${prenomInitial}${nomInitial}`);
+            initials.add(`${prenomInitial.toLowerCase()}${nomInitial.toLowerCase()}`);
+            initials.add(`${prenomInitial.toUpperCase()}${nomInitial.toUpperCase()}`);
+        }
+    }
+    return Array.from(initials);
+}
+
+// Ajouter un compteur global
+let counter = 0;
+
+// Fonction principale pour générer la liste de mots de passe
+async function generatePasswordList() {
+    const filePath = path.join(__dirname, 'passwords.txt');
+    const writeStream = fs.createWriteStream(filePath, { flags: 'w', encoding: 'utf8' });
+
+    writeStream.on('error', (err) => {
+        console.error('Erreur lors de l\'écriture du fichier:', err);
     });
 
-    let leetVariations = variations.map(leetSpeak);
-    variations = variations.concat(leetVariations);
+    // Collecte de tous les mots de données
+    const dataWords = Object.values(data).flat().filter(word => word && word.length > 0);
 
+    // Génération des initiales
     const initials = generateInitials(data.noms, data.prenoms);
-    variations = variations.concat(initials);
+    for (let initial of initials) {
+        if (!writeStream.write(initial + '\n')) {
+            await new Promise(resolve => writeStream.once('drain', resolve));
+        }
+        counter++;
 
-    addPasswordsToBatch(generateCombinations(variations));
-
-    let extraCombinations = [];
-    passwordList.forEach((pwd) => {
-        specialChars.forEach((char) => {
-            extraCombinations.push(`${pwd}${char}`);
-            extraCombinations.push(`${char}${pwd}`);
-            extraCombinations.push(`${pwd}${char}123`);
-        });
-    });
-
-    addPasswordsToBatch(extraCombinations);
-
-    data.jour_naissance.forEach((jour, index) => {
-        const mois = data.mois_naissance[index];
-        const annee = data.annee_naissance[index];
-        const dateInverse = data.dates_inversees[index];
-
-        const dates = [
-            `${jour}${mois}${annee}`, 
-            `${annee}${mois}${jour}`,
-            `${dateInverse}`, 
-            `${annee}`, 
-            `${jour}-${mois}-${annee}`,
-        ];
-
-        dates.forEach((date) => {
-            variations.forEach((variante) => {
-                addPasswordsToBatch([`${variante}${date}`, `${date}${variante}`]);
-            });
-        });
-    });
-
-    if (currentBatch.length > 0) {
-        writeBatchToFile(currentBatch, batchNumber);
+        if (counter % 100000 === 0) {
+            console.log(`Progression: ${counter} mots de passe générés.`);
+        }
     }
 
-    console.log(`Dictionnaire généré avec succès dans plusieurs fichiers !`);
+    // Générer toutes les combinaisons possibles de données
+    const combinationGen = generateAllCombinations(dataWords);
+
+    // Utilisation de l'asynchronicité pour éviter le blocage
+    for (let combination of combinationGen) {
+        // Pour chaque combinaison, générer toutes les permutations
+        for (let permutation of generatePermutations(combination)) {
+            await processCombination(permutation, writeStream);
+        }
+    }
+
+    writeStream.end();
+    writeStream.on('finish', () => {
+        console.log(`Dictionnaire généré avec succès ! Total: ${counter} mots de passe générés.`);
+    });
 }
 
-generatePasswordList();
+// Fonction pour traiter une combinaison et écrire les variations
+async function processCombination(combination, writeStream) {
+    const combined = combination.join('');
+    await writeVariationsToStream(combined, writeStream);
+
+    // Ajouter des combinaisons avec séparateurs
+    for (let sep of separators) {
+        const sepCombined = combination.join(sep);
+        if (sepCombined.length > 0) {
+            await writeVariationsToStream(sepCombined, writeStream);
+        }
+    }
+
+    // Ajouter des caractères spéciaux avant et après
+    for (let char of specialChars) {
+        const preCombined = `${char}${combined}`;
+        const postCombined = `${combined}${char}`;
+        if (preCombined.length > 0) {
+            await writeVariationsToStream(preCombined, writeStream);
+        }
+        if (postCombined.length > 0) {
+            await writeVariationsToStream(postCombined, writeStream);
+        }
+    }
+
+    // Attendre que l'event loop ait une chance de traiter d'autres tâches
+    await new Promise(resolve => setImmediate(resolve));
+}
+
+// Fonction pour écrire les variations dans le flux en gérant la backpressure
+async function writeVariationsToStream(text, writeStream) {
+    for (let variation of generateVariations(text)) {
+        if (!writeStream.write(variation + '\n')) {
+            await new Promise(resolve => writeStream.once('drain', resolve));
+        }
+        counter++;
+
+        // Afficher le compteur tous les 100,000 mots de passe générés
+        if (counter % 100000 === 0) {
+            console.log(`Progression: ${counter} mots de passe générés.`);
+        }
+    }
+}
+
+// Exécuter la génération des mots de passe
+generatePasswordList().catch(err => {
+    console.error('Erreur lors de la génération des mots de passe:', err);
+});
