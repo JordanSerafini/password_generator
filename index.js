@@ -147,6 +147,9 @@ function generateInitials(noms, prenoms) {
             initials.add(`${prenomInitial}${nomInitial}`);
             initials.add(`${prenomInitial.toLowerCase()}${nomInitial.toLowerCase()}`);
             initials.add(`${prenomInitial.toUpperCase()}${nomInitial.toUpperCase()}`);
+            // Ajout des nouvelles combinaisons pour couvrir toutes les variations
+            initials.add(`${prenomInitial.toLowerCase()}${nomInitial.toUpperCase()}`);
+            initials.add(`${prenomInitial.toUpperCase()}${nomInitial.toLowerCase()}`);
         }
     }
     return Array.from(initials);
@@ -154,7 +157,7 @@ function generateInitials(noms, prenoms) {
 
 let counter = 0;
 
-// Nouvelle fonction pour générer des combinaisons spécifiques
+// Fonction pour générer des combinaisons spécifiques
 async function generateSpecificCombinations(writeStream) {
     const initials = generateInitials(allData.noms, allData.prenoms);
 
@@ -199,29 +202,28 @@ async function generateSpecificCombinations(writeStream) {
                 for (let jour of allData.jour_naissance) {
                     if (annee && mois && jour) {
                         const dateCombinations = [
-                            initial + annee + mois + jour,
-                            initial + jour + mois + annee,
-                            initial + annee,
-                            initial + mois,
-                            initial + jour,
-                            initial + jour + mois,
-                            initial + mois + annee,
-                            initial + annee + jour,
-                            initial + annee + mois,
-                            initial + jour + annee,
-                            initial + mois + jour,
-                            // Nouvelle combinaison ajoutée
-                            initial + annee + jour + mois
+                            `${initial}${annee}${jour}${mois}`, // Ajout de annee + jour + mois
+                            `${initial}${annee}${mois}${jour}`,
+                            `${initial}${jour}${mois}${annee}`,
+                            `${initial}${annee}`,
+                            `${initial}${mois}`,
+                            `${initial}${jour}`,
+                            `${initial}${jour}${mois}`,
+                            `${initial}${mois}${annee}`,
+                            `${initial}${annee}${jour}`,
+                            `${initial}${annee}${mois}`,
+                            `${initial}${jour}${annee}`,
+                            `${initial}${mois}${jour}`
                         ];
 
                         for (let dateComb of dateCombinations) {
-                            //(`Génération de la combinaison de date: ${dateComb}`);
+                            //console.log(`Génération de la combinaison de date: ${dateComb}`);
                             await writeVariationsToStream(dateComb, writeStream);
 
                             // Ajouter des combinaisons avec séparateurs
                             const dateArr = dateComb.slice(initial.length).match(/.{1,2}/g) || [dateComb.slice(initial.length)];
                             for (let sep of separators) {
-                                const sepDateComb = initial + sep + dateArr.join(sep);
+                                const sepDateComb = `${initial}${sep}${dateArr.join(sep)}`;
                                 //console.log(`Génération de la combinaison de date avec séparateur: ${sepDateComb}`);
                                 await writeVariationsToStream(sepDateComb, writeStream);
                             }
@@ -232,7 +234,6 @@ async function generateSpecificCombinations(writeStream) {
         }
     }
 }
-
 
 // Fonction principale pour générer la liste de mots de passe
 async function generatePasswordList() {
@@ -335,7 +336,7 @@ async function processCombination(combination, writeStream) {
         const preCombined = `${char}${combined}`;
         const postCombined = `${combined}${char}`;
         if (preCombined.length > 0) {
-            //(`Ajout de préfixe spécial: ${preCombined}`);
+            //console.log(`Ajout de préfixe spécial: ${preCombined}`);
             await writeVariationsToStream(preCombined, writeStream);
         }
         if (postCombined.length > 0) {
@@ -347,7 +348,6 @@ async function processCombination(combination, writeStream) {
     // Attendre que l'event loop ait une chance de traiter d'autres tâches
     await new Promise(resolve => setImmediate(resolve));
 }
-
 
 // Fonction pour écrire les variations dans le flux en gérant la backpressure
 async function writeVariationsToStream(text, writeStream) {
@@ -361,9 +361,9 @@ async function writeVariationsToStream(text, writeStream) {
         if (counter % 100000 === 0) {
             console.log(`Progression: ${counter} mots de passe générés.`);
         }
+
     }
 }
-
 
 // Exécuter la génération des mots de passe
 generatePasswordList().catch(err => {
