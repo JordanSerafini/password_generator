@@ -20,7 +20,7 @@ const data = {
     mots_clé: []
 };
 
-// Caractères séparateurs et spéciaux
+
 // Caractères séparateurs et spéciaux
 const separators = ['_', '-', '.', '@', '#', '!', '$', '%', '&', '*', '?', '+', '=', '€', '£', '¥', '₹'];
 const specialChars = ['!', '!!', '!!!', '!?', '@', '#', '$', '%', '^', '&', '*', '?', '+', '-', '_', '.', '€', '£'];
