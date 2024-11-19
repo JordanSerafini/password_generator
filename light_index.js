@@ -3,20 +3,20 @@ const path = require('path');
 
 const data = {
     noms: ['serafini'],
-    prenoms: ['marie', 'jordan'],
+    prenoms: ['', 'jordan'],
     annee_naissance: ['1990'],
-    jour_naissance: ['12'],
-    mois_naissance: ['06'],
-    couleur_preferee: ['bleu'],
-    animaux_compagnie: ['chien'],
-    enfants: ['2'],
-    ville: ['paris'],
-    surnoms: ['jojo'],
-    code_postal: ['75000'],
-    emploi: ['developpeur'],
-    loisirs: ['tennis'],
-    plat_prefere: ['pizza'],
-    mots_clé: ['code', 'tech']
+    jour_naissance: [''],
+    mois_naissance: [''],
+    couleur_preferee: [''],
+    animaux_compagnie: [''],
+    enfants: [''],
+    ville: ['annecy'],
+    surnoms: [''],
+    code_postal: ['74370'],
+    emploi: [''],
+    loisirs: [''],
+    plat_prefere: [''],
+    mots_clé: ['', '']
 };
 
 const separators = ['_', '-', '.', '@'];
